@@ -54,6 +54,9 @@ static const kbd_op kbd_ops_url_win[] = {
   {KBD_OP_BTN}
 };
 
+volatile bool usb_connected = false;
+static volatile uint32_t usb_last_seen = 0;
+
 volatile static struct kbd_state {
   const kbd_op *op;
   union kbd_op_state {
@@ -84,6 +87,13 @@ static void kbd_goto(const kbd_op *op) {
   kbd_state.op = op;
 }
 
+void usb_update(void) {
+  if (usb_connected && SysTick->CNT - usb_last_seen > Ticks_from_Ms(500)) {
+    kbd_goto(&kbd_op_initial);
+    usb_connected = false;
+  }
+}
+
 void open_url(void) {
   kbd_goto(kbd_ops_url);
 }
@@ -95,6 +105,9 @@ void open_url_windows(void) {
 void usb_handle_user_in_request(struct usb_endpoint *e, uint8_t *scratchpad,
                                 int endp, uint32_t sendtok,
                                 struct rv003usb_internal *ist) {
+  usb_last_seen = SysTick->CNT;
+  usb_connected = true;
+
   if (endp == 1) {
     // Keyboard (8 bytes)
     int i = 0;

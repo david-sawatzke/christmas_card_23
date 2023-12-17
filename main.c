@@ -255,6 +255,7 @@ int main(void) {
     output_matrix();
     Delay_Us(300);
     read_touches();
+    usb_update();
 
     if (ws2812counter == 48) {
       if (!WS2812BLEDInUse) {
